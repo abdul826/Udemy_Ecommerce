@@ -133,6 +133,18 @@ const getBestSeller = async(req,res,next)=>{
     next(error);
   }
 }
+
+// Admin GEt Product
+const adminGetProducts = async(req,res,next)=>{
+  try {
+    const products = await Product.find({})
+    .sort({category : 1})
+    .select({name,price,category});
+    return res.json(products);
+  } catch (error) {
+    next(error);
+  }
+}
 module.exports = {getProducts,getProductById,getBestSeller};
 
 
