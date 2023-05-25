@@ -116,5 +116,47 @@ const getProductById = async(req,res,next)=>{
     next(error);
   }
 }
-module.exports = {getProducts,getProductById};
+
+// Database Query For BestSeller
+const getBestSeller = async(req,res,next)=>{
+  try {
+    const products = await Product.aggregate([
+      {$sort : {category : 1, sales: -1}}, //sort the product category as accending and sales as a decending order
+      {$group : {_id: "$category", doc_with_max_sales: {$first: "$$ROOT"}}},  //  group the matching documents by the category field, and show with first max value
+      {$replaceWith: "doc_with_max_sales"},  // replace with doc_with_max_sales
+      {$match: {sales: {$gt: 0 }}}, // match the sales value 
+      {$project: {_id: 1, name: 1, images: 1, category: 1, description: 1}},
+      {$limit: 3} // limit the value 
+    ]);
+    res.json(products);
+  } catch (error) {
+    next(error);
+  }
+}
+module.exports = {getProducts,getProductById,getBestSeller};
+
+
+
+// Important Points
+
+// Aggregation vs. Query Operations
+// Using query operations, such as the find() method, you can perform the following actions:
+
+// Select which documents to return.
+
+// Select which fields to return.
+
+// Sort the results.
+
+// Using aggregation operations, you can perform the following actions:
+
+// Perform all query operations.
+
+// Rename fields.
+
+// Calculate fields.
+
+// Summarize data.
+
+// Group values.
 
