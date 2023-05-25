@@ -106,5 +106,15 @@ const getProducts = async (req, res, next) => {
     next(error);
   }
 };
-module.exports = getProducts;
+// Get Product By ID
+
+const getProductById = async(req,res,next)=>{
+  try {
+    const product = await Product.findById(req.params.id).populate("reviews").orFail(); // We use populate to show the reviews otherwise it will show ID of reviews only.
+    res.json(product);
+  } catch (error) {
+    next(error);
+  }
+}
+module.exports = {getProducts,getProductById};
 
