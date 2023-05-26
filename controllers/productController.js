@@ -195,7 +195,7 @@ const adminUpload = async(req,res,next)=>{
     const { v4: uuidv4 } = require('uuid');
     const uploadDirectory = path.resolve(__dirname, "../../frontend", "public", "images" ,"products");  // give the path where we have to save the image
 
-    let product = await Product.findById(req.params.productID).orFail();  // get the productId
+    let product = await Product.findById(req.params.productId).orFail();  // get the productId
 
     let imageTable = [];
 
