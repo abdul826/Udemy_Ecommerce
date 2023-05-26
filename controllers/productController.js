@@ -145,7 +145,115 @@ const adminGetProducts = async(req,res,next)=>{
     next(error);
   }
 }
-module.exports = {getProducts,getProductById,getBestSeller};
+
+// Admin Update Product - 26-05-23
+const adminUpdateProducts = async(req,res,next)=>{
+  try {
+    const product = await Product.findById(req.params.id).orFail();
+    const {name,description,count,price,category,attributesTable} = req.body;
+
+    product.name = name || product.name;
+    product.description = description || product.description;
+    product.count = count || product.count;
+    product.price = price || product.price;
+    product.category = category || product.category;
+
+    if(attributesTable.lenght > 0){
+      product.attr = [];
+
+      attributesTable.map((item)=>{
+        product.attr.push(item);
+      })
+    }else{
+      product.attr = [];
+    }
+    await product.save();
+    res.json({
+      message: "Product Updated Successfully"
+    });
+
+  } catch (error) {
+    next(error);
+  }
+}
+
+// File Upload (Install package npm i express-fileupload^1.3.1 & npm i uuid@^8.3.2)
+const adminUpload = async(req,res,next)=>{
+  try {
+    if(!req.files|| !req.files.images === false){
+      return res.status(400).send("No File Uploaded");
+    }
+
+    const validateResult = imageValidate(req.files.images);
+    if(validateResult.error){
+      return res.status(400).send(validateResult.error);
+    }
+
+    const path = require("path");
+
+    // Generate Randome name (uuid)
+    const { v4: uuidv4 } = require('uuid');
+    const uploadDirectory = path.resolve(__dirname, "../../frontend", "public", "images" ,"products");  // give the path where we have to save the image
+
+    let product = await Product.findById(req.params.productID).orFail();  // get the productId
+
+    let imageTable = [];
+
+    // If image is more than 1 then "if work" otherwise else work for single image
+    if(Array.isArray(req.files.images)){
+      imageTable = req.files.images;
+    }else{
+      imageTable.push(req.files.images);
+    }
+
+    for(let image of imageTable){
+      const fileName = uuidv4() + path.extname(image.name);
+      const uploadPath = uploadDirectory + "/" + fileName;  // upload path has exect location where image is uploaded
+
+      product.images.push({path : "/images/products/" + fileName}); // push to dataBase
+
+      // check image is uploaded or not
+      image.mv(uploadPath, function(error){
+        if(error){
+          return res.status(500).send(error)
+        }
+      })
+    }
+
+    product.save();       //save to database
+    res.send("File Uploaded Succesfully");
+  } catch (error) {
+    next(error);
+  }
+}
+
+const adminDeleteProductImage = async(req,res,next)=>{
+  try {
+    const imagePath = decodeURIComponent(req.params.imagePath);
+
+    const path = require("path");
+    const finalPath = path.resolve("../frontend/public") + imagePath;
+
+    const fs = require("fs");
+    fs.unlink(finalPath, ()=>{
+      if(err){
+        res.status(500).send(err);
+      }
+    })
+
+    await Product.findOneAndUpdate(
+      {_id: req.params.productId},  // find the productId
+      {$pull:{images: {path: imagePath}}} // pull the that ID from product collection and update database
+      ).orFail()
+
+    return res.end();         // when we don't send any thing the use res.end()
+
+  } catch (error) {
+    next(error);
+  }
+}
+
+module.exports = {getProducts,getProductById,getBestSeller,adminGetProducts,adminUpdateProducts,adminUpload,adminDeleteProductImage};
 
 
 
