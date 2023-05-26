@@ -147,7 +147,7 @@ const adminGetProducts = async(req,res,next)=>{
 }
 
 // Admin Update Product - 26-05-23
-const adminUpdateProducts = async(req,res,next)=>{
+const adminUpdateProduct = async(req,res,next)=>{
   try {
     const product = await Product.findById(req.params.id).orFail();
     const {name,description,count,price,category,attributesTable} = req.body;
@@ -253,7 +253,7 @@ const adminDeleteProductImage = async(req,res,next)=>{
   }
 }
 
-module.exports = {getProducts,getProductById,getBestSeller,adminGetProducts,adminUpdateProducts,adminUpload,adminDeleteProductImage};
+module.exports = {getProducts,getProductById,getBestSeller,adminGetProducts,adminUpdateProduct,adminUpload,adminDeleteProductImage};
 
 
 
