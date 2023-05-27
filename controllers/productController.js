@@ -178,55 +178,52 @@ const adminUpdateProduct = async(req,res,next)=>{
 }
 
 // File Upload (Install package npm i express-fileupload^1.3.1 & npm i uuid@^8.3.2)
-const adminUpload = async(req,res,next)=>{
+const adminUpload = async (req, res, next) => {
   try {
-    if(!req.files|| !req.files.images === false){
-      return res.status(400).send("No File Uploaded");
+    if (!req.files || !!req.files.images === false) {
+      return res.status(400).send("No files were uploaded.");
     }
 
     const validateResult = imageValidate(req.files.images);
-    if(validateResult.error){
+    if (validateResult.error) {
       return res.status(400).send(validateResult.error);
     }
 
     const path = require("path");
+    const { v4: uuidv4 } = require("uuid");
+    const uploadDirectory = path.resolve(
+      __dirname,
+      "../../frontend",
+      "public",
+      "images",
+      "products"
+    );
 
-    // Generate Randome name (uuid)
-    const { v4: uuidv4 } = require('uuid');
-    const uploadDirectory = path.resolve(__dirname, "../../frontend", "public", "images" ,"products");  // give the path where we have to save the image
+    let product = await Product.findById(req.query.productId).orFail();
 
-    let product = await Product.findById(req.params.productId).orFail();  // get the productId
-
-    let imageTable = [];
-
-    // If image is more than 1 then "if work" otherwise else work for single image
-    if(Array.isArray(req.files.images)){
-      imageTable = req.files.images;
-    }else{
-      imageTable.push(req.files.images);
+    let imagesTable = [];
+    if (Array.isArray(req.files.images)) {
+      imagesTable = req.files.images;
+    } else {
+      imagesTable.push(req.files.images);
     }
 
-    for(let image of imageTable){
-      const fileName = uuidv4() + path.extname(image.name);
-      const uploadPath = uploadDirectory + "/" + fileName;  // upload path has exect location where image is uploaded
-
-      product.images.push({path : "/images/products/" + fileName}); // push to dataBase
-
-      // check image is uploaded or not
-      image.mv(uploadPath, function(error){
-        if(error){
-          return res.status(500).send(error)
+    for (let image of imagesTable) {
+      var fileName = uuidv4() + path.extname(image.name);
+      var uploadPath = uploadDirectory + "/" + fileName;
+      product.images.push({ path: "/images/products/" + fileName });
+      image.mv(uploadPath, function (err) {
+        if (err) {
+          return res.status(500).send(err);
         }
-      })
+      });
     }
-
-    product.save();       //save to database
-    res.send("File Uploaded Succesfully");
-  } catch (error) {
-    next(error);
+    await product.save();
+    return res.send("Files uploaded!");
+  } catch (err) {
+    next(err);
   }
-}
-
+};
 const adminDeleteProductImage = async(req,res,next)=>{
   try {
     const imagePath = decodeURIComponent(req.params.imagePath);
